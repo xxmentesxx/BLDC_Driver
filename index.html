@@ -2,11 +2,22 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>İnteraktif Adım Adım Lehimleme Kılavuzu (10x10cm Pertinaks)</title>
 <style>
-  body { margin: 0; overflow: hidden; background: #0d1013; font-family: 'Segoe UI', sans-serif; color: #fff; user-select: none; }
-  #leftUI { position: absolute; top: 10px; left: 10px; background: rgba(15,20,26,0.95); padding: 12px; border-radius: 8px; border: 1px solid #37474f; width: 280px; font-size: 12px; z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.7); max-height: 93vh; overflow-y: auto; }
-  #rightUI { position: absolute; top: 10px; right: 10px; background: rgba(15,20,26,0.96); padding: 14px; border-radius: 8px; border: 2px solid #00e676; width: 360px; font-size: 12px; z-index: 10; box-shadow: 0 4px 20px rgba(0,0,0,0.8); max-height: 93vh; overflow-y: auto; }
+  body { margin: 0; overflow: hidden; background: #0d1013; font-family: 'Segoe UI', sans-serif; color: #fff; user-select: none; touch-action: none; }
+  
+  /* Sol Panel ve Gizleme Butonu */
+  #leftUI { position: absolute; top: 44px; left: 10px; background: rgba(15,20,26,0.95); padding: 12px; border-radius: 8px; border: 1px solid #37474f; width: 270px; font-size: 12px; z-index: 10; box-shadow: 0 4px 15px rgba(0,0,0,0.7); max-height: calc(92vh - 40px); overflow-y: auto; transition: transform 0.25s ease, opacity 0.25s ease; }
+  #leftUI.hidden { transform: translateX(-310px); opacity: 0; pointer-events: none; }
+  #btnToggleLeft { position: absolute; top: 10px; left: 10px; z-index: 20; background: #006064; color: #fff; border: 1px solid #00e5ff; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.6); }
+
+  /* Alt Panel (Eski Sağ Panel) ve Ok ile Aşağı Gizleme */
+  #rightUI { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); background: rgba(15,20,26,0.96); padding: 10px 14px 14px 14px; border-radius: 12px 12px 0 0; border: 2px solid #00e676; border-bottom: none; width: min(96vw, 480px); font-size: 12px; z-index: 15; box-shadow: 0 -4px 20px rgba(0,0,0,0.85); max-height: 46vh; overflow-y: auto; box-sizing: border-box; transition: max-height 0.25s ease, padding 0.25s ease; }
+  #rightUI.collapsed { max-height: 38px; overflow: hidden; padding: 6px 14px; }
+  #rightUI.collapsed #rightContent { display: none; }
+  #btnToggleBottom { width: 100%; background: #161c22; color: #00e676; border: 1px solid #00e676; padding: 4px 8px; margin-bottom: 8px; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
   h3 { margin: 0 0 6px 0; font-size: 14px; color: #00e5ff; }
   .step-badge { background: #00e676; color: #000; font-weight: bold; padding: 3px 8px; border-radius: 4px; font-size: 12px; display: inline-block; margin-bottom: 6px; }
   .nav-btns { display: flex; gap: 6px; margin: 8px 0; }
@@ -28,14 +39,16 @@
 </head>
 <body>
 
+<button id="btnToggleLeft" onclick="toggleLeftPanel()">◀ Sol Panel</button>
+
 <div id="leftUI">
   <h3>Görünüm & Adım Listesi</h3>
   <button id="btnTrans" class="active-btn" onclick="toggleBoardOpacity()">Pertinaks: Çok Şeffaf / Mat</button>
   <button onclick="enableFreeMode()">Tüm Devreyi Göster</button>
   <div style="margin-top:4px;">
-    <button onclick="setCam(0, 14, 8.5)">Üst Bakış</button>
-    <button onclick="setCam(0, -15, 0.1)">Alt (Lehim Yüzeyi)</button>
-    <button onclick="setCam(12, 9, 10)">3D Açı</button>
+    <button onclick="setCam(0, 14, 0.01, 0, 0, -1)">Üst Bakış</button>
+    <button onclick="setCam(0, -15, 0.01, 0, 0, 1)">Alt (Lehim Yüzeyi)</button>
+    <button onclick="setCam(12, 9, 10, 0, 1, 0)">3D Açı</button>
   </div>
   <label style="margin-top:8px;">
     <input type="checkbox" id="chkShowDone" checked onchange="applyStepView()">
@@ -54,22 +67,25 @@
 </div>
 
 <div id="rightUI">
-  <span class="step-badge" id="stepBadge">ADIM 1 / 15</span>
-  <h3 id="stepTitle">Başlık</h3>
-  <div id="stepInstruction" style="color:#eceff1; line-height:1.45; margin-bottom:8px;"></div>
+  <button id="btnToggleBottom" onclick="toggleBottomPanel()">▼ Adım Panelini Aşağı Gizle</button>
+  <div id="rightContent">
+    <span class="step-badge" id="stepBadge">ADIM 1 / 15</span>
+    <h3 id="stepTitle">Başlık</h3>
+    <div id="stepInstruction" style="color:#eceff1; line-height:1.45; margin-bottom:8px;"></div>
 
-  <div class="nav-btns">
-    <button onclick="prevStep()">◀ Önceki Adım</button>
-    <button class="btn-next" onclick="nextStep()">Lehimledim, Sonraki ▶</button>
+    <div class="nav-btns">
+      <button onclick="prevStep()">◀ Önceki Adım</button>
+      <button class="btn-next" onclick="nextStep()">Lehimledim, Sonraki ▶</button>
+    </div>
+
+    <div style="color:#ffeb3b; font-weight:bold; margin-top:6px;">🔥 Bu Adımda Lehimlenecek Hatlar (Tek Tek Görmek İçin Tıklayın):</div>
+    <div id="stepWiresList"></div>
+    <button onclick="applyStepView()" style="width:100%; margin-top:4px;">Bu Adımın Tüm Kablolarını Birlikte Göster</button>
   </div>
-
-  <div style="color:#ffeb3b; font-weight:bold; margin-top:6px;">🔥 Bu Adımda Lehimlenecek Hatlar (Tek Tek Görmek İçin Tıklayın):</div>
-  <div id="stepWiresList"></div>
-  <button onclick="applyStepView()" style="width:100%; margin-top:4px;">Bu Adımın Tüm Kablolarını Birlikte Göster</button>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TrackballControls.js"></script>
 <script>
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x0d1013);
@@ -80,8 +96,13 @@ const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const controls = new THREE.OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
+// Kısıtsız 360 Derece Serbest Döndürme (TrackballControls)
+const controls = new THREE.TrackballControls(camera, renderer.domElement);
+controls.rotateSpeed = 3.2;
+controls.zoomSpeed = 1.2;
+controls.panSpeed = 0.8;
+controls.staticMoving = false;
+controls.dynamicDampingFactor = 0.15;
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.85));
 const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -633,7 +654,6 @@ window.applyStepView = function() {
   document.getElementById("stepTitle").innerText = st.title;
   document.getElementById("stepInstruction").innerHTML = st.desc;
 
-  // Önceki adımlarda lehimlenmiş olanları topla
   const doneComps = new Set();
   const doneWires = new Set();
   for (let i = 0; i < currentStep; i++) {
@@ -641,7 +661,6 @@ window.applyStepView = function() {
     STEPS[i].wires.forEach(w => doneWires.add(w));
   }
 
-  // Komponent görünürlükleri
   Object.values(components).forEach(c => {
     if (st.comps.includes(c.id)) {
       c.mat.opacity = 1.0;
@@ -661,7 +680,6 @@ window.applyStepView = function() {
     }
   });
 
-  // Kablo görünürlükleri
   Object.values(wires).forEach(w => {
     if (st.wires.includes(w.id)) {
       w.mat.opacity = 1.0;
@@ -675,7 +693,6 @@ window.applyStepView = function() {
     }
   });
 
-  // Sağ paneldeki aktif kablo listesini oluştur
   const listEl = document.getElementById("stepWiresList");
   listEl.innerHTML = "";
   st.wires.forEach(wId => {
@@ -689,7 +706,6 @@ window.applyStepView = function() {
   });
 };
 
-// Adım içindeki tek bir kabloya tıklanınca sadece onu ve bağlı olduğu tüm parçaları parlat
 window.soloWireInStep = function(wireId) {
   Object.values(wires).forEach(w => {
     if (w.id === wireId) {
@@ -736,12 +752,67 @@ window.enableFreeMode = function() {
   });
 };
 
-// 3D Ekranda doğrudan bir parçaya veya kabloya tıklama desteği
+// Sol ve Alt Panelleri Gizleme / Açma Fonksiyonları
+window.toggleLeftPanel = function() {
+  const el = document.getElementById("leftUI");
+  const btn = document.getElementById("btnToggleLeft");
+  el.classList.toggle("hidden");
+  btn.innerText = el.classList.contains("hidden") ? "▶ Sol Panel" : "◀ Sol Panel";
+};
+
+window.toggleBottomPanel = function() {
+  const el = document.getElementById("rightUI");
+  const btn = document.getElementById("btnToggleBottom");
+  el.classList.toggle("collapsed");
+  btn.innerText = el.classList.contains("collapsed")
+    ? "▲ Adım Panelini Aç"
+    : "▼ Adım Panelini Aşağı Gizle";
+};
+
+// Ekranın Merkezindeki Komponente / Noktaya Göre Dönme
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
+const centerScreen = new THREE.Vector2(0, 0);
+const boardPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 let downPos = { x: 0, y: 0 };
 
-renderer.domElement.addEventListener('pointerdown', e => { downPos = { x: e.clientX, y: e.clientY }; });
+function updatePivotToScreenCenter() {
+  raycaster.setFromCamera(centerScreen, camera);
+  const visibleTargets = [
+    ...compMeshes.filter(m => m.material && m.material.opacity > 0.2),
+    ...wireMeshes.filter(m => m.material && m.material.opacity > 0.2),
+    board
+  ];
+  const hits = raycaster.intersectObjects(visibleTargets, false);
+  let pivot = null;
+  if (hits.length > 0) {
+    const hitObj = hits[0].object;
+    if (hitObj.userData && hitObj.userData.kind === "comp") {
+      const comp = components[hitObj.userData.compId];
+      if (comp) {
+        pivot = new THREE.Vector3();
+        comp.group.getWorldPosition(pivot);
+      }
+    }
+    if (!pivot) pivot = hits[0].point.clone();
+  } else {
+    const planePt = new THREE.Vector3();
+    if (raycaster.ray.intersectPlane(boardPlane, planePt)) {
+      if (Math.abs(planePt.x) <= 6 && Math.abs(planePt.z) <= 6) {
+        pivot = planePt;
+      }
+    }
+  }
+  if (pivot) {
+    controls.target.copy(pivot);
+  }
+}
+
+renderer.domElement.addEventListener('pointerdown', e => {
+  downPos = { x: e.clientX, y: e.clientY };
+  updatePivotToScreenCenter();
+}, { capture: true });
+
 renderer.domElement.addEventListener('pointerup', e => {
   if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
   mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -751,9 +822,16 @@ renderer.domElement.addEventListener('pointerup', e => {
   const hits = raycaster.intersectObjects([...compMeshes, ...wireMeshes]);
   if (hits.length > 0) {
     const d = hits[0].object.userData;
-    if (d.kind === "wire") soloWireInStep(d.wireId);
-    else if (d.kind === "comp") {
+    if (d.kind === "wire") {
+      soloWireInStep(d.wireId);
+      controls.target.copy(hits[0].point);
+    } else if (d.kind === "comp") {
       const cid = d.compId;
+      if (components[cid]) {
+        const p = new THREE.Vector3();
+        components[cid].group.getWorldPosition(p);
+        controls.target.copy(p);
+      }
       Object.values(wires).forEach(w => {
         const conn = w.compList.includes(cid);
         w.mat.opacity = conn ? 1.0 : 0.04;
@@ -772,8 +850,9 @@ window.toggleBoardOpacity = function() {
   document.getElementById("btnTrans").className = boardTransparent ? "active-btn" : "";
 };
 
-window.setCam = function(x, y, z) {
+window.setCam = function(x, y, z, upX = 0, upY = 1, upZ = 0) {
   camera.position.set(x, y, z);
+  camera.up.set(upX, upY, upZ);
   controls.target.set(0, 0, 0);
   controls.update();
 };
@@ -791,7 +870,9 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth/window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
+  controls.handleResize();
 });
 </script>
 </body>
 </html>
+
