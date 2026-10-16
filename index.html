@@ -3,90 +3,77 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>BLDC Sürücü - Hat Bazlı 3D Lehim Kılavuzu</title>
+<title>BLDC Sürücü 3D Montaj Kılavuzu</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-  body { background: #0d1117; color: #e6edf3; overflow: hidden; width: 100vw; height: 100vh; }
-  #canvas-container { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  body { background: #0b0f17; color: #e2e8f0; overflow: hidden; width: 100vw; height: 100vh; touch-action: none; }
+  #canvas-container { width: 100vw; height: 100vh; position: absolute; inset: 0; z-index: 1; }
 
-  /* Üst Kontrol Barı */
+  /* Kompakt Üst Menü (Mobil Uyumlu Tek Satır) */
   #top-bar {
-    position: absolute; top: 8px; left: 8px; right: 8px; z-index: 10;
-    display: flex; flex-wrap: wrap; gap: 6px; justify-content: space-between; align-items: center;
-    background: rgba(22, 27, 34, 0.88); backdrop-filter: blur(8px);
-    padding: 8px 12px; border-radius: 10px; border: 1px solid #30363d;
+    position: absolute; top: 6px; left: 6px; right: 6px; z-index: 10;
+    display: flex; align-items: center; justify-content: space-between; gap: 4px;
+    background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(6px);
+    padding: 5px 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+    overflow-x: auto;
   }
-  .btn-group { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; }
+  .btn-row { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
   button {
-    background: #21262d; color: #c9d1d9; border: 1px solid #363b42;
-    padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-weight: 600;
+    background: #1e293b; color: #cbd5e1; border: 1px solid #334155;
+    padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    cursor: pointer; white-space: nowrap;
   }
-  button.active { background: #1f6feb; color: #fff; border-color: #388bfd; }
-  button:active { transform: scale(0.97); }
-  .slider-wrap { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #8b949e; }
-  input[type=range] { width: 70px; accent-color: #1f6feb; }
+  button.active { background: #2563eb; color: #ffffff; border-color: #60a5fa; }
+  .opacity-ctrl { display: flex; align-items: center; gap: 4px; font-size: 10px; color: #94a3b8; flex-shrink: 0; }
+  .opacity-ctrl input { width: 55px; height: 18px; accent-color: #3b82f6; }
 
-  /* Alt Adım Paneli (Mobil ve Masaüstü Uyumlu) */
-  #bottom-panel {
-    position: absolute; bottom: 8px; left: 8px; right: 8px; z-index: 10;
-    background: rgba(22, 27, 34, 0.92); backdrop-filter: blur(8px);
-    border: 1px solid #30363d; border-radius: 12px; padding: 10px 14px;
-    max-height: 44vh; display: flex; flex-direction: column; gap: 8px;
+  /* Kompakt Alt Adım Kartı (Gizlenebilir/Küçültülebilir) */
+  #bottom-card {
+    position: absolute; bottom: 6px; left: 6px; right: 6px; z-index: 10;
+    background: rgba(15, 23, 42, 0.90); backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.14); border-radius: 10px;
+    padding: 8px 10px; transition: max-height 0.2s ease;
   }
-  #step-header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  #step-title { font-size: 14px; font-weight: 700; color: #58a6ff; }
-  #step-nav { display: flex; gap: 6px; }
-  #step-desc {
-    font-size: 12.5px; line-height: 1.45; color: #d0d7de;
-    overflow-y: auto; max-height: 24vh; padding-right: 4px;
+  #card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+  #step-title { font-size: 12px; font-weight: 700; color: #60a5fa; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav-btns { display: flex; gap: 4px; align-items: center; }
+  #step-body {
+    margin-top: 6px; font-size: 11.5px; line-height: 1.38; color: #e2e8f0;
+    max-height: 18vh; overflow-y: auto; padding-right: 2px;
   }
-  #step-desc ul { padding-left: 18px; margin-top: 4px; }
-  #step-desc li { margin-bottom: 4px; }
-  .hl-part { color: #ffa657; font-weight: 700; }
-  .hl-wire { color: #7ee787; font-weight: 700; }
-
-  /* 3D Etiketler */
-  .label-3d {
-    position: absolute; pointer-events: none; z-index: 5;
-    background: rgba(13, 17, 23, 0.85); color: #fff;
-    padding: 2px 5px; border-radius: 4px; font-size: 10px; font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.25); white-space: nowrap;
-    transform: translate(-50%, -100%);
-  }
-  .label-3d.active-step {
-    background: #1f6feb; border-color: #79c0ff; color: #fff; font-size: 11px;
-    box-shadow: 0 0 8px rgba(31,111,235,0.8);
-  }
+  #bottom-card.minimized #step-body { display: none; }
+  .p-tag { color: #fbbf24; font-weight: 700; }
+  .w-tag { color: #34d399; font-weight: 700; }
 </style>
 </head>
 <body>
 
 <div id="canvas-container"></div>
-<div id="labels-container"></div>
 
 <div id="top-bar">
-  <div class="btn-group">
-    <button id="btn-top" onclick="setCameraView('top')">Üstten</button>
-    <button id="btn-bottom" onclick="setCameraView('bottom')">Alttan (Lehim)</button>
-    <button id="btn-iso" class="active" onclick="setCameraView('iso')">3D Açı</button>
-    <button id="btn-labels" class="active" onclick="toggleLabels()">İsimler</button>
+  <div class="btn-row">
+    <button id="v-iso" class="active" onclick="setView('iso')">3D</button>
+    <button id="v-top" onclick="setView('top')">Üst</button>
+    <button id="v-bot" onclick="setView('bot')">Alt (Lehim)</button>
+    <button id="btn-lbl" class="active" onclick="cycleLabelMode()">İsim: Aktif Adım</button>
   </div>
-  <div class="slider-wrap">
-    <span>Pertinaks:</span>
-    <input type="range" id="board-opacity" min="0" max="0.6" step="0.02" value="0.10" oninput="updateBoardOpacity(this.value)">
+  <div class="opacity-ctrl">
+    <span>Plaket:</span>
+    <input type="range" min="0" max="0.5" step="0.02" value="0.08" oninput="setBoardOpacity(this.value)">
   </div>
 </div>
 
-<div id="bottom-panel">
-  <div id="step-header">
-    <div id="step-title">Adım 1 / 8</div>
-    <div id="step-nav">
-      <button onclick="prevStep()">◀ Önceki</button>
-      <button class="active" onclick="nextStep()">Sonraki ▶</button>
-      <button onclick="showAllSteps()">Tümünü Gör</button>
+<div id="bottom-card">
+  <div id="card-head">
+    <div id="step-title">Adım 1/7</div>
+    <div class="nav-btns">
+      <button onclick="changeStep(-1)">◀</button>
+      <button class="active" onclick="changeStep(1)">İleri ▶</button>
+      <button id="btn-all" onclick="toggleAll()">Tümü</button>
+      <button id="btn-min" onclick="toggleMin()">▼</button>
     </div>
   </div>
-  <div id="step-desc"></div>
+  <div id="step-body"></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -94,10 +81,10 @@
 
 <script>
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d1117);
+scene.background = new THREE.Color(0x0b0f17);
 
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 85, 95);
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.5, 600);
+camera.position.set(0, 78, 82);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -107,488 +94,578 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
+controls.target.set(0, 0, 2);
 
-// Işıklandırma
-scene.add(new THREE.AmbientLight(0xffffff, 0.85));
-const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.7);
-dirLight1.position.set(40, 80, 50);
-scene.add(dirLight1);
-const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.4);
-dirLight2.position.set(-40, -80, -30);
-scene.add(dirLight2);
+// Işıklar
+scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+const dLight1 = new THREE.DirectionalLight(0xffffff, 0.7);
+dLight1.position.set(50, 90, 60);
+scene.add(dLight1);
+const dLight2 = new THREE.DirectionalLight(0x93c5fd, 0.4);
+dLight2.position.set(-50, -80, -40);
+scene.add(dLight2);
 
-// Pertinaks (Çok Şeffaf)
+// Ultra Şeffaf Pertinaks Plaket
 const boardMat = new THREE.MeshPhongMaterial({
-  color: 0xc68b59, transparent: true, opacity: 0.10, depthWrite: false, side: THREE.DoubleSide
+  color: 0xd97706, transparent: true, opacity: 0.08, depthWrite: false, side: THREE.DoubleSide
 });
-const boardGeo = new THREE.BoxGeometry(100, 1.6, 100);
-const boardMesh = new THREE.Mesh(boardGeo, boardMat);
-scene.add(boardMesh);
+const board = new THREE.Mesh(new THREE.BoxGeometry(96, 1.4, 88), boardMat);
+scene.add(board);
 
-// İnce Delik Izgarası (Görüntüyü kapatmayan hafif referans noktaları)
-const gridHelper = new THREE.GridHelper(96, 38, 0x30363d, 0x21262d);
-gridHelper.position.y = 0.82;
-scene.add(gridHelper);
+// İnce Delik Referans Izgarası
+const grid = new THREE.GridHelper(92, 36, 0x334155, 0x1e293b);
+grid.position.y = 0.72;
+grid.scale.z = 84 / 92;
+scene.add(grid);
 
-// Soğutucular (Yarı Şeffaf Metal)
-const hsMat = new THREE.MeshPhongMaterial({ color: 0x8b949e, transparent: true, opacity: 0.28, depthWrite: false });
-// 8cm Ana Soğutucu (1-5. MOSFET'ler için)
-const hsMain = new THREE.Mesh(new THREE.BoxGeometry(80, 16, 6), hsMat);
-hsMain.position.set(-6, 9, -43);
-scene.add(hsMain);
+// Soğutucular (Yarı Şeffaf)
+const hsMat = new THREE.MeshPhongMaterial({ color: 0x94a3b8, transparent: true, opacity: 0.22, depthWrite: false });
+// 8cm Ana Soğutucu (Q1-Q5)
+const hs1 = new THREE.Mesh(new THREE.BoxGeometry(74, 15, 4), hsMat);
+hs1.position.set(-7, 8.2, -37.5);
+scene.add(hs1);
+// Ayrı Soğutucu (Q6 ve 7812)
+const hs2 = new THREE.Mesh(new THREE.BoxGeometry(26, 15, 4), hsMat);
+hs2.position.set(33, 8.2, -22.5);
+scene.add(hs2);
 
-// Ayrı Soğutucu (6. MOSFET ve 7812 için)
-const hsSub = new THREE.Mesh(new THREE.BoxGeometry(26, 16, 6), hsMat);
-hsSub.position.set(36, 9, -22);
-scene.add(hsSub);
+const parts = [];
+const wires = [];
+const sprites = [];
 
-// Tüm Komponentler ve Kablolar Listesi
-const allParts = [];
-const allWires = [];
-const labelElements = [];
-let showLabels = true;
+// 3D Ölçekli Etiket (Ekranı kaplamaz, yakınlaşınca okunur)
+function makeTextSprite(text, bgColor = 'rgba(15,23,42,0.88)', borderColor = '#60a5fa') {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.font = 'bold 26px sans-serif';
+  const w = Math.ceil(ctx.measureText(text).width) + 24;
+  const h = 40;
+  canvas.width = w;
+  canvas.height = h;
 
-// Yardımcı Fonksiyon: 3D Parça Oluşturma
-function addComponent(step, name, type, x, z, rotY = 0) {
-  const group = new THREE.Group();
-  group.position.set(x, 0.8, z);
-  group.rotation.y = rotY;
-  group.userData = { step, name };
+  ctx.fillStyle = bgColor;
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.roundRect(2, 2, w - 4, h - 4, 8);
+  ctx.fill();
+  ctx.stroke();
 
-  const pinMat = new THREE.MeshStandardMaterial({ color: 0xd0d7de, metalness: 0.8, roughness: 0.2 });
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 24px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, w / 2, h / 2 + 1);
 
-  if (type === 'mosfet' || type === '7812') {
-    const bodyColor = type === '7812' ? 0x1f6feb : 0x161b22;
-    const body = new THREE.Mesh(new THREE.BoxGeometry(9.5, 9, 4.2), new THREE.MeshPhongMaterial({ color: bodyColor }));
-    body.position.y = 6.5;
-    const tab = new THREE.Mesh(new THREE.BoxGeometry(9.5, 4, 1.2), pinMat);
-    tab.position.set(0, 12, -1.5);
-    group.add(body, tab);
-    [-2.54, 0, 2.54].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 7, 8), pinMat);
-      pin.position.set(px, 0.5, 0);
-      group.add(pin);
-    });
-  } else if (type === 'cap') {
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 8, 16), new THREE.MeshPhongMaterial({ color: 0x0969da }));
-    body.position.y = 4.5;
-    // Eksi şeridi (Beyaz)
-    const stripe = new THREE.Mesh(new THREE.BoxGeometry(1.5, 8.1, 1.5), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    stripe.position.set(2.2, 4.5, 0);
-    group.add(body, stripe);
-    [-1.5, 1.5].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 6, 8), pinMat);
-      pin.position.set(px, 0, 0);
-      group.add(pin);
-    });
-  } else if (type === 'ceramic') {
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 1.2, 12), new THREE.MeshPhongMaterial({ color: 0xd29922 }));
-    body.rotation.x = Math.PI / 2;
-    body.position.y = 3;
-    group.add(body);
-    [-1.27, 1.27].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5, 8), pinMat);
-      pin.position.set(px, 0, 0);
-      group.add(pin);
-    });
-  } else if (type === 'diode') {
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, 7, 12), new THREE.MeshPhongMaterial({ color: 0x21262d }));
-    body.rotation.z = Math.PI / 2;
-    body.position.y = 2.5;
-    // Katot çizgisi
-    const band = new THREE.Mesh(new THREE.CylinderGeometry(1.85, 1.85, 1.4, 12), new THREE.MeshBasicMaterial({ color: 0xe6edf3 }));
-    band.rotation.z = Math.PI / 2;
-    band.position.set(2, 2.5, 0);
-    group.add(body, band);
-    [-4.5, 4.5].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.4, 5, 8), pinMat);
-      pin.position.set(px, 0.5, 0);
-      group.add(pin);
-    });
-  } else if (type === 'to92_npn' || type === 'to92_pnp') {
-    const color = type === 'to92_npn' ? 0x238636 : 0x8957e5;
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 4.5, 12, 1, false, 0, Math.PI), new THREE.MeshPhongMaterial({ color }));
-    body.position.y = 3.5;
-    group.add(body);
-    [-1.5, 0, 1.5].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5.5, 8), pinMat);
-      pin.position.set(px, 0, 0);
-      group.add(pin);
-    });
-  } else if (type === 'pc817') {
-    const body = new THREE.Mesh(new THREE.BoxGeometry(4.6, 3.2, 6.4), new THREE.MeshPhongMaterial({ color: 0x21262d }));
-    body.position.y = 3;
-    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.5, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    dot.position.set(-1.5, 4.7, -2);
-    group.add(body, dot);
-    [[-1.8, -2], [-1.8, 2], [1.8, 2], [1.8, -2]].forEach(([px, pz]) => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5.5, 8), pinMat);
-      pin.position.set(px, 0, pz);
-      group.add(pin);
-    });
-  } else if (type === 'resistor') {
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 5.5, 10), new THREE.MeshPhongMaterial({ color: 0xd2a8ff }));
-    body.rotation.z = Math.PI / 2;
-    body.position.y = 2;
-    group.add(body);
-    [-3.5, 3.5].forEach(px => {
-      const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4.5, 8), pinMat);
-      pin.position.set(px, 0.2, 0);
-      group.add(pin);
-    });
-  }
-
-  scene.add(group);
-  allParts.push(group);
-
-  // Etiket oluştur
-  const div = document.createElement('div');
-  div.className = 'label-3d';
-  div.textContent = name;
-  document.getElementById('labels-container').appendChild(div);
-  labelElements.push({ div, obj: group, step });
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.minFilter = THREE.LinearFilter;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(w * 0.065, h * 0.065, 1);
+  return sprite;
 }
 
-// Yardımcı Fonksiyon: Kablo / Lehim Yolu Çizme (Pertinaks Altından)
-function addWire(step, points, colorHex, radius = 0.55) {
-  const vecs = points.map(p => new THREE.Vector3(p[0], p[1], p[2]));
-  const curve = new THREE.CatmullRomCurve3(vecs, false, 'catmullrom', 0.05);
-  const geo = new THREE.TubeGeometry(curve, vecs.length * 6, radius, 8, false);
-  const mat = new THREE.MeshPhongMaterial({ color: colorHex, shininess: 80 });
-  const mesh = new THREE.Mesh(geo, mat);
-  mesh.userData = { step, baseColor: colorHex };
+const leadMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.85, roughness: 0.2 });
 
-  // Lehim Noktaları (Başlangıç ve Bitiş)
-  [vecs[0], vecs[vecs.length - 1]].forEach(v => {
-    const pad = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.45, 8, 8), mat);
-    pad.position.copy(v);
-    mesh.add(pad);
+// Parça Oluşturucu (Bacak koordinatları net)
+function createPart(step, label, type, x, z, opts = {}) {
+  const g = new THREE.Group();
+  g.position.set(x, 0.7, z);
+  g.userData = { step, label };
+
+  let labelY = 6.5;
+
+  if (type === 'to220') {
+    const isReg = opts.isReg || false;
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(9.2, 8.5, 4),
+      new THREE.MeshPhongMaterial({ color: isReg ? 0x1d4ed8 : 0x1e293b })
+    );
+    body.position.y = 6.2;
+    const tab = new THREE.Mesh(new THREE.BoxGeometry(9.2, 3.8, 1.1), leadMat);
+    tab.position.set(0, 11.5, -1.45);
+    // Kapton Bant Gösterimi (Kehribar rengi yalıtım)
+    const kapton = new THREE.Mesh(
+      new THREE.BoxGeometry(10.2, 13, 0.4),
+      new THREE.MeshBasicMaterial({ color: 0xd97706, transparent: true, opacity: 0.65 })
+    );
+    kapton.position.set(0, 7.5, -2.2);
+    g.add(body, tab, kapton);
+
+    [-2.54, 0, 2.54].forEach(px => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 6.5, 8), leadMat);
+      p.position.set(px, 0.2, 0);
+      g.add(p);
+    });
+    labelY = 14.5;
+  }
+  else if (type === 'elcap') {
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(3.2, 3.2, 7.5, 16),
+      new THREE.MeshPhongMaterial({ color: 0x0284c7 })
+    );
+    body.position.y = 4.2;
+    // Eksi (-) şeridi sağ bacakta (+1.5)
+    const neg = new THREE.Mesh(new THREE.BoxGeometry(1.4, 7.6, 1.8), new THREE.MeshBasicMaterial({ color: 0xf8fafc }));
+    neg.position.set(2.2, 4.2, 0);
+    g.add(body, neg);
+    [-1.5, 1.5].forEach(px => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 5.5, 8), leadMat);
+      p.position.set(px, -0.2, 0);
+      g.add(p);
+    });
+    labelY = 9.5;
+  }
+  else if (type === 'ceramic') {
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 2.2, 1.2, 12),
+      new THREE.MeshPhongMaterial({ color: 0xd97706 })
+    );
+    body.rotation.x = Math.PI / 2;
+    body.position.y = 3.2;
+    g.add(body);
+    [-1.5, 1.5].forEach(px => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5, 8), leadMat);
+      p.position.set(px, -0.2, 0);
+      g.add(p);
+    });
+    labelY = 6.8;
+  }
+  else if (type === 'diode') {
+    // Dikey veya yatay yerleşim: Anot (-z / üst), Katot (+z / alt çizgili)
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.9, 1.9, 6.5, 12),
+      new THREE.MeshPhongMaterial({ color: 0x0f172a })
+    );
+    body.rotation.x = Math.PI / 2;
+    body.position.y = 2.6;
+    const band = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.96, 1.96, 1.4, 12),
+      new THREE.MeshBasicMaterial({ color: 0xe2e8f0 })
+    );
+    band.rotation.x = Math.PI / 2;
+    band.position.set(0, 2.6, 1.8); // Katot (+z tarafı)
+    g.add(body, band);
+    [-4, 4].forEach(pz => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.38, 0.38, 5, 8), leadMat);
+      p.position.set(0, 0, pz);
+      g.add(p);
+    });
+    labelY = 6.2;
+  }
+  else if (type === 'to92') {
+    const isPnp = opts.isPnp || false;
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.2, 2.2, 4.2, 12, 1, false, 0, Math.PI),
+      new THREE.MeshPhongMaterial({ color: isPnp ? 0x9333ea : 0x16a34a })
+    );
+    body.position.y = 3.2;
+    g.add(body);
+    // Sol(-1.5): Emitter, Orta(0): Base, Sağ(+1.5): Collector
+    [-1.5, 0, 1.5].forEach(px => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5.2, 8), leadMat);
+      p.position.set(px, -0.2, 0);
+      g.add(p);
+    });
+    labelY = 6.8;
+  }
+  else if (type === 'pc817') {
+    const body = new THREE.Mesh(
+      new THREE.BoxGeometry(4.6, 3.2, 6.2),
+      new THREE.MeshPhongMaterial({ color: 0x1e293b })
+    );
+    body.position.y = 2.8;
+    // Pin 1 Noktası (Sol-Alt: -1.8, +2.0)
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.45, 8, 8), new THREE.MeshBasicMaterial({ color: 0xfef08a }));
+    dot.position.set(-1.4, 4.5, 2.0);
+    g.add(body, dot);
+    // Pin1:(-1.8,+2), Pin2:(+1.8,+2), Pin3:(+1.8,-2), Pin4:(-1.8,-2)
+    [[-1.8, 2], [1.8, 2], [1.8, -2], [-1.8, -2]].forEach(([px, pz]) => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 5.2, 8), leadMat);
+      p.position.set(px, -0.2, pz);
+      g.add(p);
+    });
+    labelY = 6.8;
+  }
+  else if (type === 'res') {
+    // opts.dir === 'z' ise kuzey-güney (-3..+3 z), yoksa doğu-batı (-3..+3 x)
+    const alongZ = opts.dir === 'z';
+    const body = new THREE.Mesh(
+      new THREE.CylinderGeometry(1.05, 1.05, 4.4, 10),
+      new THREE.MeshPhongMaterial({ color: 0xfde68a })
+    );
+    if (alongZ) body.rotation.x = Math.PI / 2;
+    else body.rotation.z = Math.PI / 2;
+    body.position.y = 2.0;
+    g.add(body);
+    [-3, 3].forEach(d => {
+      const p = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4.6, 8), leadMat);
+      p.position.set(alongZ ? 0 : d, -0.2, alongZ ? d : 0);
+      g.add(p);
+    });
+    labelY = 4.8;
+  }
+
+  const sp = makeTextSprite(label);
+  sp.position.set(0, labelY, 0);
+  g.add(sp);
+  sprites.push({ sprite: sp, step });
+
+  scene.add(g);
+  parts.push(g);
+}
+
+// Lehim Yolu Oluşturucu (Pertinaks Altı: y = -1.1)
+function createWire(step, pts, colorHex, radius = 0.52) {
+  const vPts = pts.map(p => new THREE.Vector3(p[0], p[1], p[2]));
+  const curve = new THREE.CatmullRomCurve3(vPts, false, 'catmullrom', 0.02);
+  const geo = new THREE.TubeGeometry(curve, Math.max(vPts.length * 6, 12), radius, 8, false);
+  const mat = new THREE.MeshPhongMaterial({ color: colorHex, shininess: 90 });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.userData = { step, colorHex };
+
+  // Her bacak düğümüne lehim topu ekle
+  vPts.forEach(v => {
+    const joint = new THREE.Mesh(new THREE.SphereGeometry(radius * 1.35, 8, 8), mat);
+    joint.position.copy(v);
+    mesh.add(joint);
   });
 
   scene.add(mesh);
-  allWires.push(mesh);
+  wires.push(mesh);
 }
 
-// ==========================================
-// DEVRE ELEMANLARININ HAT BAZLI YERLEŞİMİ
-// ==========================================
-// Faz X koordinat merkezleri: U = -30, V = -4, W = +22
-const phases = [
-  { name: 'U', x: -30, stepOut: 4, stepHi: 5, stepLo: 6, mHi: '1. MOSFET', mLo: '2. MOSFET', mLoZ: -38 },
-  { name: 'V', x: -4,  stepOut: 7, stepHi: 7, stepLo: 7, mHi: '3. MOSFET', mLo: '4. MOSFET', mLoZ: -38 },
-  { name: 'W', x: 22,  stepOut: 8, stepHi: 8, stepLo: 8, mHi: '5. MOSFET', mLo: '6. MOSFET', mLoZ: -17 }
+// =========================================================
+// TAM HİZALI DEVRE YERLEŞİMİ (HER PARÇA BACAK BACAĞA EŞLEŞİR)
+// =========================================================
+// Faz Merkezleri: U = -30, V = -4, W = +22
+const phList = [
+  { name: 'U', cx: -30, qHiX: -36, qLoX: -24, qLoZ: -35, qHiName: 'Q1 IRF2807', qLoName: 'Q2 IRF2807' },
+  { name: 'V', cx: -4,  qHiX: -10, qLoX: 2,   qLoZ: -35, qHiName: 'Q3 IRF2807', qLoName: 'Q4 IRF2807' },
+  { name: 'W', cx: 22,  qHiX: 16,  qLoX: 28,  qLoZ: -20, qHiName: 'Q5 IRF2807', qLoName: 'Q6 IRF2807' }
 ];
 
-// --- ADIM 1: +36V Ana Hattı ve Bu Hatta Değen Tüm Parçalar ---
-addComponent(1, '1. MOSFET', 'mosfet', -36, -38);
-addComponent(1, '3. MOSFET', 'mosfet', -10, -38);
-addComponent(1, '5. MOSFET', 'mosfet', 16, -38);
-addComponent(1, '7812 Regülatör', '7812', 41, -17);
-// +36V Kalın Kırmızı Bara (1, 3, 5. MOSFET Orta bacakları ve 7812 Sol bacağını tek seferde birleştirir)
-addWire(1, [[-45, -1.2, -35], [-36, -1.2, -35], [-10, -1.2, -35], [16, -1.2, -35], [38.46, -1.2, -17]], 0xff2222, 0.95);
-// Orta bacaklardan +36V baraya bağlantı
-addWire(1, [[-36, -1.2, -38], [-36, -1.2, -35]], 0xff2222, 0.8);
-addWire(1, [[-10, -1.2, -38], [-10, -1.2, -35]], 0xff2222, 0.8);
-addWire(1, [[16, -1.2, -38], [16, -1.2, -35]], 0xff2222, 0.8);
+// --- ADIM 1: Soğutucudaki MOSFET'ler, 7812 ve +36V Ana Hattı ---
+phList.forEach(p => {
+  createPart(1, p.qHiName, 'to220', p.qHiX, -35);
+  createPart(1, p.qLoName, 'to220', p.qLoX, p.qLoZ);
+});
+createPart(1, '7812', 'to220', 40, -20, { isReg: true });
+
+// +36V Kırmızı Ana Bara: Q1 Orta(-36,-35) -> Q3 Orta(-10,-35) -> Q5 Orta(16,-35) -> 7812 Sol(37.46,-20)
+createWire(1, [
+  [-44, -1.2, -32],
+  [-36, -1.2, -32],
+  [-10, -1.2, -32],
+  [16, -1.2, -32],
+  [37.46, -1.2, -20]
+], 0xef4444, 0.9);
+// Q1, Q3, Q5 Orta bacaklarını +36V hattına bağla
+[ -36, -10, 16 ].forEach(x => createWire(1, [[x, -1.2, -35], [x, -1.2, -32]], 0xef4444, 0.8));
 
 // --- ADIM 2: GND (Eksi) Ana Hattı ve GND'ye Değen Tüm Parçalar ---
-addComponent(2, '2. MOSFET', 'mosfet', -24, -38);
-addComponent(2, '4. MOSFET', 'mosfet', 2, -38);
-addComponent(2, '6. MOSFET', 'mosfet', 30, -17);
-addComponent(2, '47uF (12V)', 'cap', 41, -4);
-addComponent(2, '100nF', 'ceramic', 41, 2);
+// 7812 çıkış filtre kondansatörleri (Eksi bacakları x=41.5'te GND'ye değer)
+createPart(2, '47uF', 'elcap', 40, -10);
+createPart(2, '100nF', 'ceramic', 40, -4);
 
-phases.forEach(p => {
-  // Alt S8550 (Collector bacağı doğrudan GND hattına lehimlenir)
-  addComponent(2, `S8550 (${p.name} Alt)`, 'to92_pnp', p.x + 5, 16);
-  // Alt MOSFET Gate-GND 10k direnci (bir bacağı doğrudan GND hattına lehimlenir)
-  addComponent(2, '10k', 'resistor', p.x + 5, -8);
+phList.forEach(p => {
+  // Alt MOSFET Gate-GND 10k direnci (Sol:-26.54 Gate, Sağ:-20.54 GND)
+  createPart(2, '10k', 'res', p.qLoX - 0.54, p.qLoZ + 6);
+  // Alt S8550 (Sol:E, Orta:B, Sağ:Collector=GND -> p.cx + 5.5)
+  createPart(2, 'S8550', 'to92', p.cx + 4, 15, { isPnp: true });
+  // PC817 Optokuplör (Pin 2 Katot = GND -> p.cx - 2.2, z=30)
+  createPart(2, 'PC817', 'pc817', p.cx - 4, 28);
 });
 
-// Ana GND Kalın Siyah/Gri Bara
-addWire(2, [[-45, -1.4, -31], [-21.46, -1.4, -31], [4.54, -1.4, -31], [32.54, -1.4, -17], [41, -1.4, -17], [42.5, -1.4, 2]], 0x6e7681, 0.95);
-// Alt MOSFET Sağ (Source) bacakları -> GND
-addWire(2, [[-21.46, -1.4, -38], [-21.46, -1.4, -31]], 0x6e7681, 0.8);
-addWire(2, [[4.54, -1.4, -38], [4.54, -1.4, -31]], 0x6e7681, 0.8);
-// Alt S8550 Collector ve Alt 10k dirençlerin GND birleşimi
-addWire(2, [[-21.5, -1.4, 16], [30.5, -1.4, 16], [42.5, -1.4, 2]], 0x6e7681, 0.6);
-phases.forEach(p => {
-  addWire(2, [[p.x + 8.5, -1.4, -8], [p.x + 8.5, -1.4, 16]], 0x6e7681, 0.5);
+// GND Ana Siyah/Gri Bara (Q2 Sağ -> Q4 Sağ -> Q6 Sağ -> 7812 Orta -> 47uF(-) -> 100nF(-))
+createWire(2, [
+  [-44, -1.4, -29],
+  [-21.46, -1.4, -29],
+  [4.54, -1.4, -29],
+  [30.54, -1.4, -20],
+  [40, -1.4, -20],
+  [41.5, -1.4, -10],
+  [41.5, -1.4, -4]
+], 0x64748b, 0.9);
+
+// Q2 ve Q4 Sağ (Source) bacakları ve 10k dirençlerin sağ bacaklarını GND'ye bağla
+createWire(2, [[-21.46, -1.4, -35], [-21.46, -1.4, -29], [-21.54, -1.4, -29]], 0x64748b, 0.7);
+createWire(2, [[4.54, -1.4, -35], [4.54, -1.4, -29], [4.46, -1.4, -29]], 0x64748b, 0.7);
+createWire(2, [[30.54, -1.4, -20], [30.46, -1.4, -14]], 0x64748b, 0.65);
+
+// Alt S8550 Collector (p.cx+5.5, 15) ve PC817 Pin 2 (p.cx-2.2, 30) GND ortak hattı
+createWire(2, [
+  [41.5, -1.4, -4],
+  [41.5, -1.4, 15],
+  [27.5, -1.4, 15],
+  [1.5, -1.4, 15],
+  [-24.5, -1.4, 15]
+], 0x64748b, 0.6);
+
+phList.forEach(p => {
+  // Alt 10k sağ bacak -> Alt S8550 Collector -> PC817 Pin 2
+  createWire(2, [
+    [p.qLoX + 2.46, -1.4, p.qLoZ + 6],
+    [p.cx + 5.5, -1.4, 15],
+    [p.cx - 2.2, -1.4, 30]
+  ], 0x64748b, 0.5);
 });
 
-// --- ADIM 3: +12V Hattı ve Bu Hatta Değen Tüm Parçalar ---
-phases.forEach(p => {
-  // SB5B0 Diyotlar (Anot bacakları doğrudan +12V hattına lehimlenir)
-  addComponent(3, 'SB5B0 Diyot', 'diode', p.x - 4, -2);
-  // Alt S8050 (Collector bacakları doğrudan +12V hattına lehimlenir)
-  addComponent(3, `S8050 (${p.name} Alt)`, 'to92_npn', p.x + 5, 9);
-});
-// +12V Turuncu Hat (7812 Sağ bacak -> 47uF(+) -> 100nF -> 3x SB5B0 Anot -> 3x S8050 Collector)
-addWire(3, [[43.54, -1.2, -17], [39.5, -1.2, -4], [39.5, -1.2, 2], [13.5, -1.2, -2], [-12.5, -1.2, -2], [-38.5, -1.2, -2]], 0xff9800, 0.65);
-addWire(3, [[-38.5, -1.2, -2], [-26.5, -1.2, 9], [-0.5, -1.2, 9], [25.5, -1.2, 9]], 0xff9800, 0.55);
-
-// --- ADIM 4, 5, 6, 7, 8: Faz Çıkışları ve Sürücü Grupları ---
-phases.forEach(p => {
-  const mHiX = p.name === 'U' ? -36 : (p.name === 'V' ? -10 : 16);
-  const mLoX = p.name === 'U' ? -24 : (p.name === 'V' ? 2 : 30);
-
-  // 1) Ortak Faz Çıkış Hattı ve Bu Hatta Değen Parçalar
-  addComponent(p.stepOut, '47uF', 'cap', p.x - 4, -12);
-  addComponent(p.stepOut, `S8550 (${p.name} Üst)`, 'to92_pnp', p.x - 4, 16);
-  addComponent(p.stepOut, '10k', 'resistor', p.x - 4, -22); // Üst Gate-Source 10k
-  addComponent(p.stepOut, '10k', 'resistor', p.x - 4, 24);  // PC817 çıkış 10k
-
-  // Kalın Faz Çıkış Kablosu (Üst MOSFET Sağ Bacak + Alt MOSFET Orta Bacak + 47uF(-) + Üst S8550 Collector + 2x 10k Direnç)
-  addWire(p.stepOut, [
-    [mHiX + 2.54, -1.3, -38],
-    [mLoX, -1.3, p.mLoZ],
-    [p.x - 2.5, -1.3, -22],
-    [p.x - 2.5, -1.3, -12],
-    [p.x - 2.5, -1.3, 16],
-    [p.x - 0.5, -1.3, 24]
-  ], 0x3fb950, 0.8);
-
-  // 2) Üst Sürücü Parçaları ve Bağlantıları
-  addComponent(p.stepHi, `S8050 (${p.name} Üst)`, 'to92_npn', p.x - 4, 9);
-  addComponent(p.stepHi, 'PC817', 'pc817', p.x - 4, 32);
-  addComponent(p.stepHi, '22 Ohm', 'resistor', p.x - 4, -27);
-  addComponent(p.stepHi, '330 Ohm', 'resistor', p.x - 4, 41);
-
-  // Bootstrap (+) Düğümü: SB5B0 Katot + 47uF(+) + S8050 Collector + PC817 Pin 4
-  addWire(p.stepHi, [
-    [p.x + 0.5, -1.1, -2],
-    [p.x - 5.5, -1.1, -12],
-    [p.x - 5.5, -1.1, 9],
-    [p.x - 2.2, -1.1, 30]
-  ], 0xd2a8ff, 0.55);
-
-  // PC817 Pin 3 -> Üst S8050/S8550 Base (Orta) + 10k Direnç
-  addWire(p.stepHi, [
-    [p.x - 2.2, -1.1, 34],
-    [p.x - 7.5, -1.1, 24],
-    [p.x - 4, -1.1, 16],
-    [p.x - 4, -1.1, 9]
-  ], 0x58a6ff, 0.5);
-
-  // Üst S8050/S8550 Emitter -> 22 Ohm -> Üst MOSFET Gate (Sol Bacak) + 10k Direnç
-  addWire(p.stepHi, [
-    [p.x - 5.5, -1.1, 16],
-    [p.x - 5.5, -1.1, 9],
-    [p.x - 7.5, -1.1, -27]
-  ], 0x79c0ff, 0.5);
-  addWire(p.stepHi, [
-    [p.x - 0.5, -1.1, -27],
-    [p.x - 7.5, -1.1, -22],
-    [mHiX - 2.54, -1.1, -38]
-  ], 0x79c0ff, 0.55);
-
-  // 330 Ohm -> PC817 Pin 1 (Üst PWM Girişi)
-  addWire(p.stepHi, [[p.x - 7.5, -1.1, 41], [p.x - 5.8, -1.1, 30]], 0xffa657, 0.45);
-
-  // 3) Alt Sürücü Parçaları ve Bağlantıları
-  addComponent(p.stepLo, '22 Ohm', 'resistor', p.x + 5, -14);
-  addComponent(p.stepLo, '1k', 'resistor', p.x + 5, 28);
-
-  // Alt S8050/S8550 Base (Orta) -> 1k Direnç (Alt PWM Girişi)
-  addWire(p.stepLo, [
-    [p.x + 5, -1.1, 9],
-    [p.x + 5, -1.1, 16],
-    [p.x + 1.5, -1.1, 28]
-  ], 0x58a6ff, 0.5);
-
-  // Alt S8050/S8550 Emitter -> 22 Ohm -> Alt MOSFET Gate (Sol Bacak) + 10k Direnç
-  addWire(p.stepLo, [
-    [p.x + 6.5, -1.1, 9],
-    [p.x + 6.5, -1.1, 16],
-    [p.x + 1.5, -1.1, -14]
-  ], 0x79c0ff, 0.5);
-  addWire(p.stepLo, [
-    [p.x + 8.5, -1.1, -14],
-    [p.x + 1.5, -1.1, -8],
-    [mLoX - 2.54, -1.1, p.mLoZ]
-  ], 0x79c0ff, 0.55);
+// --- ADIM 3: +12V Besleme Hattı ve +12V'a Değen Tüm Parçalar ---
+phList.forEach(p => {
+  // SB5B0 Diyot (Anot: z=-6 [+12V], Katot çizgili: z=+2 [Bootstrap])
+  createPart(3, 'SB5B0', 'diode', p.cx - 4, -2);
+  // Alt S8050 (Sol:E, Orta:B, Sağ:Collector = +12V -> p.cx + 5.5, z=8)
+  createPart(3, 'S8050', 'to92', p.cx + 4, 8);
 });
 
-// ==========================================
-// ADIM AÇIKLAMALARI (HAT BAZLI BİRLİKTE LEHİMLEME)
-// ==========================================
-const stepData = [
+// +12V Turuncu Hat: 7812 Sağ(42.54,-20) -> 47uF(+)(38.5,-10) -> 100nF(+)(38.5,-4) -> 3x SB5B0 Anot(z=-6) -> 3x Alt S8050 C(z=8)
+createWire(3, [
+  [42.54, -1.2, -20],
+  [38.5, -1.2, -10],
+  [38.5, -1.2, -4],
+  [18, -1.2, -6],
+  [-8, -1.2, -6],
+  [-34, -1.2, -6]
+], 0xf97316, 0.65);
+
+phList.forEach(p => {
+  createWire(3, [[p.cx - 4, -1.2, -6], [p.cx + 5.5, -1.2, 8]], 0xf97316, 0.5);
+});
+
+// --- ADIM 4: U, V, W Faz Çıkış Hatları ve Bu Hatta Değen Tüm Parçalar ---
+phList.forEach(p => {
+  // Üst MOSFET Gate-Source 10k direnci (Sol: Gate, Sağ: Source/Faz)
+  createPart(4, '10k', 'res', p.qHiX - 0.54, -25);
+  // Bootstrap 47uF Kondansatör (Sol: +, Sağ: Eksi/Faz)
+  createPart(4, '47uF', 'elcap', p.cx - 4, -12);
+  // Üst S8550 (Sağ bacak Collector = Faz)
+  createPart(4, 'S8550', 'to92', p.cx - 4, 15, { isPnp: true });
+  // PC817 Çıkış 10k Direnci (Sol: Base/PC817_Pin3, Sağ: Faz)
+  createPart(4, '10k', 'res', p.cx - 4, 21);
+
+  // Yeşil Kalın Faz Hattı: Üst MOSFET Sağ(Source) + Alt MOSFET Orta(Drain) + 10k(Sağ) + 47uF(-) + Üst S8550(C) + 10k(Sağ)
+  createWire(4, [
+    [p.qHiX + 2.54, -1.3, -35],
+    [p.qLoX, -1.3, p.qLoZ],
+    [p.qHiX + 2.46, -1.3, -25],
+    [p.cx - 2.5, -1.3, -12],
+    [p.cx - 2.5, -1.3, 15],
+    [p.cx - 1.0, -1.3, 21]
+  ], 0x10b981, 0.8);
+});
+
+// --- ADIM 5: Bootstrap (+) Hattı (SB5B0 Katot + 47uF(+) + Üst S8050 + PC817 Pin 4) ---
+phList.forEach(p => {
+  // Üst S8050 (Sağ bacak Collector = Bootstrap +)
+  createPart(5, 'S8050', 'to92', p.cx - 4, 8);
+
+  // Mor Bootstrap Hattı: SB5B0 Çizgili Katot(z=+2) + 47uF(+)(p.cx-5.5, -12) + Üst S8050 C(p.cx-2.5, 8) + PC817 Pin 4(p.cx-5.8, 26)
+  createWire(5, [
+    [p.cx - 5.5, -1.1, -12],
+    [p.cx - 4, -1.1, 2],
+    [p.cx - 2.5, -1.1, 8],
+    [p.cx - 5.8, -1.1, 26]
+  ], 0xc084fc, 0.55);
+});
+
+// --- ADIM 6: 22 Ohm Gate Dirençleri ve MOSFET Gate (Sol Bacak) Bağlantıları ---
+phList.forEach(p => {
+  // Üst 22 Ohm direnç (z yönünde: Kuzey ucu Gate'e, Güney ucu Üst S8050/S8550 Emitter'e)
+  createPart(6, '22 Ohm', 'res', p.cx - 6.5, -19, { dir: 'z' });
+  // Alt 22 Ohm direnç (z yönünde: Kuzey ucu Alt Gate'e, Güney ucu Alt S8050/S8550 Emitter'e)
+  createPart(6, '22 Ohm', 'res', p.cx + 2.5, -1, { dir: 'z' });
+
+  // Üst S8050/S8550 Emitter (Sol bacaklar: p.cx-5.5) -> Üst 22 Ohm Güney ucu(-16)
+  createWire(6, [
+    [p.cx - 5.5, -1.1, 15],
+    [p.cx - 5.5, -1.1, 8],
+    [p.cx - 6.5, -1.1, -16]
+  ], 0x38bdf8, 0.5);
+
+  // Üst 22 Ohm Kuzey ucu(-22) -> Üst 10k Sol bacak -> Üst MOSFET Gate (Sol bacak)
+  createWire(6, [
+    [p.cx - 6.5, -1.1, -22],
+    [p.qHiX - 3.54, -1.1, -25],
+    [p.qHiX - 2.54, -1.1, -35]
+  ], 0x38bdf8, 0.55);
+
+  // Alt S8050/S8550 Emitter (Sol bacaklar: p.cx+2.5) -> Alt 22 Ohm Güney ucu(+2)
+  createWire(6, [
+    [p.cx + 2.5, -1.1, 15],
+    [p.cx + 2.5, -1.1, 8],
+    [p.cx + 2.5, -1.1, 2]
+  ], 0x38bdf8, 0.5);
+
+  // Alt 22 Ohm Kuzey ucu(-4) -> Alt 10k Sol bacak -> Alt MOSFET Gate (Sol bacak)
+  createWire(6, [
+    [p.cx + 2.5, -1.1, -4],
+    [p.qLoX - 3.54, -1.1, p.qLoZ + 6],
+    [p.qLoX - 2.54, -1.1, p.qLoZ]
+  ], 0x38bdf8, 0.55);
+});
+
+// --- ADIM 7: S8050/S8550 Base (Orta Bacaklar) ve PWM Giriş Dirençleri (330 Ohm ve 1k) ---
+phList.forEach(p => {
+  // Üst PWM Giriş Direnci: 330 Ohm (PC817 Pin 1'e bağlanır)
+  createPart(7, '330 Ohm', 'res', p.cx - 5.8, 35, { dir: 'z' });
+  // Alt PWM Giriş Direnci: 1k (Alt S8050/S8550 Base bacaklarına bağlanır)
+  createPart(7, '1k', 'res', p.cx + 4, 25, { dir: 'z' });
+
+  // Üst Base Hattı: PC817 Pin 3 (p.cx-2.2, 26) -> 10k Sol Bacak (p.cx-7, 21) -> Üst S8550 Orta(15) -> Üst S8050 Orta(8)
+  createWire(7, [
+    [p.cx - 2.2, -1.1, 26],
+    [p.cx - 7.0, -1.1, 21],
+    [p.cx - 4.0, -1.1, 15],
+    [p.cx - 4.0, -1.1, 8]
+  ], 0xfacc15, 0.5);
+
+  // 330 Ohm Kuzey ucu(32) -> PC817 Pin 1 (p.cx-5.8, 30)
+  createWire(7, [[p.cx - 5.8, -1.1, 32], [p.cx - 5.8, -1.1, 30]], 0xfacc15, 0.5);
+
+  // Alt Base Hattı: 1k Kuzey ucu(22) -> Alt S8550 Orta(15) -> Alt S8050 Orta(8)
+  createWire(7, [
+    [p.cx + 4.0, -1.1, 22],
+    [p.cx + 4.0, -1.1, 15],
+    [p.cx + 4.0, -1.1, 8]
+  ], 0xfacc15, 0.5);
+});
+
+// =========================================================
+// ADIM METİNLERİ (KISA, NET VE HAT BAZLI)
+// =========================================================
+const steps = [
   {
-    title: "Adım 1 / 8: +36V Ana Güç Hattı ve Bu Hatta Değen Parçalar",
-    desc: `Sonradan kalın kabloya ek yapmamak için, bacağı <b>+36V Ana Hattına</b> değecek olan tüm parçaları yerleştirip tek seferde lehimliyoruz:
-    <ul>
-      <li><span class="hl-part">1, 3 ve 5. MOSFET (IRF2807):</span> 8 cm soğutucuya Kapton bantla yalıtarak sabitleyin.</li>
-      <li><span class="hl-part">7812 Regülatör:</span> Ayrı soğutucuya sabitleyin.</li>
-      <li><span class="hl-wire">Kırmızı +36V Kablosu:</span> <b>1, 3 ve 5. MOSFET'in Orta (Drain) bacaklarını</b> ve <b>7812'nin Sol (Giriş) bacağını</b> aynı kalın kalaylı kabloyla tek seferde birbirine lehimleyin.</li>
-    </ul>`
+    title: "Adım 1/7: MOSFET'ler, 7812 ve +36V Ana Güç Hattı",
+    body: `<span class="p-tag">Q1-Q5 (IRF2807)</span> 8cm soğutucuya, <span class="p-tag">Q6</span> ve <span class="p-tag">7812</span> ayrı soğutucuya Kapton bantla sabitlenir.<br>
+    • <span class="w-tag">Kırmızı +36V Hattı:</span> <b>Q1, Q3, Q5 Orta (Drain)</b> bacakları ile <b>7812 Sol (IN)</b> bacağını kalın kalaylı kabloyla tek seferde birbirine lehimleyin.`
   },
   {
-    title: "Adım 2 / 8: Eksi (GND) Ana Hattı ve GND'ye Değen Tüm Parçalar",
-    desc: `GND kablosunu çekerken, bir bacağı doğrudan <b>GND hattına</b> bağlanacak olan tüm parçaları şimdi takıp birlikte lehimliyoruz:
-    <ul>
-      <li><span class="hl-part">2 ve 4. MOSFET:</span> Ana soğutucuya, <span class="hl-part">6. MOSFET</span> ise ayrı soğutucuya sabitlenir. <b>Sağ (Source) bacakları</b> GND'ye lehimlenir.</li>
-      <li><span class="hl-part">7812 Orta Bacak + 47uF (Eksi) + 100nF (1. Bacak):</span> Doğrudan bu GND hattına lehimlenir.</li>
-      <li><span class="hl-part">3x Alt S8550 + 3x 10k Direnç:</span> Alt sürücüdeki 3 adet <b>S8550'nin Collector bacağını</b> ve alt MOSFET'lerin <b>10k dirençlerinin birer bacağını</b> da şimdi takıp doğrudan GND hattına lehimleyin.</li>
-    </ul>`
+    title: "Adım 2/7: GND (Eksi) Hattı ve GND'ye Değen Tüm Parçalar",
+    body: `Sonradan GND hattına parça eklememek için GND'ye değen tüm parçaları şimdi takıp birlikte lehimliyoruz:<br>
+    • <b>Q2, Q4, Q6 Sağ (Source)</b> + <b>7812 Orta (GND)</b> + <span class="p-tag">47uF (-)</span> + <span class="p-tag">100nF</span><br>
+    • Alt MOSFET'lerdeki <b>3x</b> <span class="p-tag">10k</span> (sağ bacakları) + <b>3x Alt</b> <span class="p-tag">S8550</span> (Sağ/Collector) + <b>3x</b> <span class="p-tag">PC817</span> (Pin 2) tek seferde <span class="w-tag">Gri GND hattına</span> lehimlenir.`
   },
   {
-    title: "Adım 3 / 8: +12V Besleme Hattı ve Bu Hatta Değen Tüm Parçalar",
-    desc: `7812'nin çıkışından (+12V) kablo çekerken, bu kabloya temas eden tüm parçaları aynı anda yerleştirip lehimliyoruz:
-    <ul>
-      <li><span class="hl-part">7812 Sağ Bacak (Çıkış):</span> <span class="hl-part">47uF (+) bacağı</span> ve <span class="hl-part">100nF (2. bacak)</span> ile birleşir.</li>
-      <li><span class="hl-part">3x SB5B0 Diyot (Çizgisiz Anot Bacakları):</span> Üç diyotu da şimdi takın, çizgisiz bacaklarını doğrudan bu +12V kablosuna lehimleyin.</li>
-      <li><span class="hl-part">3x Alt S8050 (Collector Bacakları):</span> Alt sürücüdeki üç S8050 transistörü de takıp Collector bacaklarını aynı +12V hattına lehimleyin.</li>
-    </ul>`
+    title: "Adım 3/7: +12V Hattı ve +12V'a Değen Tüm Parçalar",
+    body: `7812 çıkışından +12V kablosunu çekerken bu yola değen tüm parçaları birlikte takıp lehimliyoruz:<br>
+    • <b>7812 Sağ (OUT)</b> + <span class="p-tag">47uF (+)</span> + <span class="p-tag">100nF</span><br>
+    • <b>3x</b> <span class="p-tag">SB5B0 Diyot</span> (Çizgisiz Anot bacakları) ve <b>3x Alt</b> <span class="p-tag">S8050</span> (Sağ/Collector bacakları) <span class="w-tag">Turuncu +12V hattına</span> birlikte lehimlenir.`
   },
   {
-    title: "Adım 4 / 8: U Fazı Ortak Çıkış Hattı ve Üzerindeki Parçalar",
-    desc: `U Fazı motor çıkış hattını çekerken, bu hatta bacağı değen tüm U fazı parçalarını birlikte takıp lehimliyoruz:
-    <ul>
-      <li><span class="hl-wire">Yeşil U Fazı Kablosu:</span> <span class="hl-part">1. MOSFET Sağ (Source)</span> bacağı ile <span class="hl-part">2. MOSFET Orta (Drain)</span> bacağını kalın kabloyla birleştirir.</li>
-      <li><b>Aynı kabloya şimdi lehimlenecekler:</b> U fazı <span class="hl-part">47uF Kondansatör (Eksi bacağı)</span>, <span class="hl-part">S8550 (U Üst - Collector bacağı)</span>, üst MOSFET <span class="hl-part">10k Direnç (1. bacak)</span> ve PC817 önündeki <span class="hl-part">10k Direnç (1. bacak)</span>.</li>
-    </ul>`
+    title: "Adım 4/7: U-V-W Faz Çıkış Hatları ve Üzerindeki Parçalar",
+    body: `Her faz için motor çıkış kablosunu çekerken o kabloya değen tüm parçaları aynı anda lehimliyoruz:<br>
+    • <b>Üst MOSFET Sağ (Source)</b> + <b>Alt MOSFET Orta (Drain)</b><br>
+    • Üst <span class="p-tag">10k</span> (sağ bacak) + Bootstrap <span class="p-tag">47uF (-)</span> + <b>Üst</b> <span class="p-tag">S8550</span> (Sağ/Collector) + PC817 önündeki <span class="p-tag">10k</span> (sağ bacak) <span class="w-tag">Yeşil Faz hattına</span> birlikte lehimlenir.`
   },
   {
-    title: "Adım 5 / 8: U Fazı Üst Sürücü Bağlantıları (1. MOSFET Tetikleme)",
-    desc: `U fazının üst sürücü parçalarını yerleştirip kendi aralarındaki 3 kısa bağlantıyı yapıyoruz:
-    <ul>
-      <li><span class="hl-wire">Mor Hat:</span> Adım 3'te taktığımız <span class="hl-part">SB5B0 (Çizgili Katot)</span> + <span class="hl-part">47uF (+)</span> + <span class="hl-part">S8050 (U Üst - Collector)</span> + <span class="hl-part">PC817 (4. Bacak)</span> birbirine lehimlenir.</li>
-      <li><span class="hl-wire">Mavi Hat:</span> <span class="hl-part">PC817 (3. Bacak)</span> + <span class="hl-part">S8050 ve S8550 Orta (Base)</span> bacakları + Adım 4'teki <span class="hl-part">10k Direnç</span> boşta kalan bacağı birleşir. (<span class="hl-part">330 Ohm</span> direnç PC817 1. bacağına takılır).</li>
-      <li><span class="hl-wire">Açık Mavi Hat:</span> <span class="hl-part">S8050 ve S8550 Emitter</span> bacakları birleşip <span class="hl-part">22 Ohm Direnç</span> üzerinden <span class="hl-part">1. MOSFET Sol (Gate)</span> bacağına ve <span class="hl-part">10k Direnç</span> ucuna lehimlenir.</li>
-    </ul>`
+    title: "Adım 5/7: Bootstrap (+) Hattı (SB5B0 + 47uF + S8050 + PC817)",
+    body: `Üst <span class="p-tag">S8050</span> transistörleri yerleştirin. Her faz için <span class="w-tag">Mor Bootstrap hattını</span> lehimleyin:<br>
+    • <span class="p-tag">SB5B0</span> (Çizgili Katot bacağı) + <span class="p-tag">47uF (+)</span> + <b>Üst</b> <span class="p-tag">S8050</span> (Sağ/Collector) + <span class="p-tag">PC817</span> (Pin 4) bacaklarını birbirine birleştirin.`
   },
   {
-    title: "Adım 6 / 8: U Fazı Alt Sürücü Bağlantıları (2. MOSFET Tetikleme)",
-    desc: `Alt <span class="hl-part">S8050</span> ve <span class="hl-part">S8550</span> transistörlerinin Collector bacaklarını Adım 2 ve 3'te zaten lehimlemiştik. Şimdi kalan bacaklarını tamamlıyoruz:
-    <ul>
-      <li><span class="hl-part">1k Direnç:</span> Alt <span class="hl-part">S8050 ve S8550 Orta (Base)</span> bacaklarıyla birleştirilip lehimlenir (Diğer ucu Alt PWM giriş kablosudur).</li>
-      <li><span class="hl-part">22 Ohm Direnç:</span> Alt <span class="hl-part">S8050 ve S8550 Emitter</span> bacaklarından çıkıp <span class="hl-part">2. MOSFET Sol (Gate)</span> bacağına ve Adım 2'de taktığımız <span class="hl-part">10k Direnç</span> ucuna lehimlenir.</li>
-    </ul>`
+    title: "Adım 6/7: 22 Ohm Dirençler ve MOSFET Gate (Sol Bacak) Hattı",
+    body: `6 adet <span class="p-tag">22 Ohm</span> direnci yerleştirin (3 üst, 3 alt):<br>
+    • <span class="w-tag">Açık Mavi Hat:</span> Her fazda <span class="p-tag">S8050</span> ve <span class="p-tag">S8550</span> <b>Sol (Emitter)</b> bacaklarını birleştirip <span class="p-tag">22 Ohm</span> dirence girin; direncin diğer ucunu <b>MOSFET Sol (Gate)</b> bacağı ve <span class="p-tag">10k</span> direncin boş bacağıyla lehimleyin.`
   },
   {
-    title: "Adım 7 / 8: V Fazı (3. ve 4. MOSFET) Tüm Sürücü ve Çıkış Hattı",
-    desc: `U fazında yaptığımız işlemin birebir aynısını ortadaki V fazı için birlikte lehimliyoruz:
-    <ul>
-      <li><span class="hl-wire">Yeşil V Fazı Hattı:</span> <span class="hl-part">3. MOSFET Sağ</span> + <span class="hl-part">4. MOSFET Orta</span> + <span class="hl-part">47uF (Eksi)</span> + <span class="hl-part">S8550 (V Üst Collector)</span> + iki adet <span class="hl-part">10k Direnç</span> aynı anda lehimlenir.</li>
-      <li>Üst ve alt <span class="hl-part">S8050 / S8550</span>, <span class="hl-part">PC817</span>, iki adet <span class="hl-part">22 Ohm</span>, <span class="hl-part">330 Ohm</span> ve <span class="hl-part">1k Direnç</span> bağlantıları tamamlanır.</li>
-    </ul>`
-  },
-  {
-    title: "Adım 8 / 8: W Fazı (5. ve 6. MOSFET) Tüm Sürücü ve Çıkış Hattı",
-    desc: `Son olarak sağdaki W fazını (5. MOSFET ana soğutucuda, 6. MOSFET ayrı soğutucuda) tamamlıyoruz:
-    <ul>
-      <li><span class="hl-wire">Yeşil W Fazı Hattı:</span> <span class="hl-part">5. MOSFET Sağ</span> bacağından ayrı soğutucudaki <span class="hl-part">6. MOSFET Orta</span> bacağına kalın kablo çekilir; yol üzerindeki <span class="hl-part">47uF (Eksi)</span>, <span class="hl-part">S8550 (W Üst Collector)</span> ve iki adet <span class="hl-part">10k Direnç</span> aynı kabloya lehimlenir.</li>
-      <li>W fazının <span class="hl-part">PC817</span>, <span class="hl-part">S8050 / S8550</span>, <span class="hl-part">22 Ohm</span>, <span class="hl-part">330 Ohm</span> ve <span class="hl-part">1k Direnç</span> bağlantıları lehimlenerek kart tamamlanır.</li>
-    </ul>`
+    title: "Adım 7/7: Base Bağlantıları ve PWM Giriş Dirençleri (330 Ohm & 1k)",
+    body: `Son olarak <span class="p-tag">330 Ohm</span> (Üst PWM) ve <span class="p-tag">1k</span> (Alt PWM) giriş dirençlerini takın:<br>
+    • <span class="w-tag">Sarı Hat (Üst):</span> <b>Üst S8050/S8550 Orta (Base)</b> + <span class="p-tag">10k</span> sol bacak + <span class="p-tag">PC817 Pin 3</span> birleşir. <span class="p-tag">330 Ohm</span> direnç PC817 Pin 1'e lehimlenir.<br>
+    • <span class="w-tag">Sarı Hat (Alt):</span> <b>Alt S8050/S8550 Orta (Base)</b> bacakları <span class="p-tag">1k</span> dirence lehimlenir.`
   }
 ];
 
-let currentStep = 1;
-let viewAll = false;
+let curStep = 1;
+let showAll = false;
+let labelMode = 1; // 1: Sadece Aktif Adım, 2: Tüm İsimler, 0: Gizli
 
-function updateStepVisibility() {
-  document.getElementById('step-title').textContent = viewAll
-    ? "Tüm Devre Görünümü (Adım 1 - 8)"
-    : stepData[currentStep - 1].title;
-  document.getElementById('step-desc').innerHTML = stepData[currentStep - 1].desc;
+function refreshScene() {
+  document.getElementById('step-title').textContent = showAll
+    ? "Tüm Devre (Adım 1-7)"
+    : steps[curStep - 1].title;
+  document.getElementById('step-body').innerHTML = steps[curStep - 1].body;
+  document.getElementById('btn-all').classList.toggle('active', showAll);
 
-  allParts.forEach(part => {
-    const s = part.userData.step;
-    part.visible = viewAll || s <= currentStep;
-    part.traverse(child => {
-      if (child.isMesh && child.material) {
-        child.material.transparent = (!viewAll && s < currentStep);
-        child.material.opacity = (!viewAll && s < currentStep) ? 0.32 : 1.0;
+  parts.forEach(p => {
+    const s = p.userData.step;
+    p.visible = showAll || s <= curStep;
+    const isPast = !showAll && s < curStep;
+    p.traverse(c => {
+      if (c.isMesh && c.material) {
+        c.material.transparent = isPast || c.material.opacity < 1;
+        c.material.opacity = isPast ? 0.28 : (c.material.opacity === 0.65 ? 0.65 : 1.0);
       }
     });
   });
 
-  allWires.forEach(wire => {
-    const s = wire.userData.step;
-    wire.visible = viewAll || s <= currentStep;
-    wire.material.transparent = (!viewAll && s < currentStep);
-    wire.material.opacity = (!viewAll && s < currentStep) ? 0.25 : 1.0;
-    wire.material.emissive = new THREE.Color((!viewAll && s === currentStep) ? wire.userData.baseColor : 0x000000);
-    wire.material.emissiveIntensity = (!viewAll && s === currentStep) ? 0.45 : 0;
+  wires.forEach(w => {
+    const s = w.userData.step;
+    w.visible = showAll || s <= curStep;
+    const isCur = !showAll && s === curStep;
+    const isPast = !showAll && s < curStep;
+    w.material.transparent = isPast;
+    w.material.opacity = isPast ? 0.22 : 1.0;
+    w.material.emissive = new THREE.Color(isCur ? w.userData.colorHex : 0x000000);
+    w.material.emissiveIntensity = isCur ? 0.5 : 0;
+  });
+
+  sprites.forEach(item => {
+    if (labelMode === 0) {
+      item.sprite.visible = false;
+    } else if (labelMode === 1) {
+      item.sprite.visible = showAll || item.step === curStep;
+    } else {
+      item.sprite.visible = showAll || item.step <= curStep;
+    }
   });
 }
 
-function nextStep() {
-  viewAll = false;
-  if (currentStep < stepData.length) currentStep++;
-  updateStepVisibility();
+function changeStep(dir) {
+  showAll = false;
+  curStep = Math.max(1, Math.min(steps.length, curStep + dir));
+  refreshScene();
 }
 
-function prevStep() {
-  viewAll = false;
-  if (currentStep > 1) currentStep--;
-  updateStepVisibility();
+function toggleAll() {
+  showAll = !showAll;
+  refreshScene();
 }
 
-function showAllSteps() {
-  viewAll = !viewAll;
-  updateStepVisibility();
+function toggleMin() {
+  const card = document.getElementById('bottom-card');
+  const btn = document.getElementById('btn-min');
+  card.classList.toggle('minimized');
+  btn.textContent = card.classList.contains('minimized') ? '▲' : '▼';
 }
 
-function updateBoardOpacity(val) {
+function cycleLabelMode() {
+  labelMode = (labelMode + 1) % 3;
+  const btn = document.getElementById('btn-lbl');
+  const names = ['İsim: Kapalı', 'İsim: Aktif Adım', 'İsim: Tümü'];
+  btn.textContent = names[labelMode];
+  btn.classList.toggle('active', labelMode > 0);
+  refreshScene();
+}
+
+function setBoardOpacity(val) {
   boardMat.opacity = parseFloat(val);
 }
 
-function toggleLabels() {
-  showLabels = !showLabels;
-  document.getElementById('btn-labels').classList.toggle('active', showLabels);
-}
-
-function setCameraView(mode) {
-  document.querySelectorAll('#top-bar .btn-group button').forEach(b => {
-    if (b.id !== 'btn-labels') b.classList.remove('active');
-  });
-  if (mode === 'top') {
-    camera.position.set(0, 120, 0.1);
-    document.getElementById('btn-top').classList.add('active');
-  } else if (mode === 'bottom') {
-    camera.position.set(0, -120, 0.1);
-    document.getElementById('btn-bottom').classList.add('active');
+function setView(v) {
+  ['v-iso', 'v-top', 'v-bot'].forEach(id => document.getElementById(id).classList.remove('active'));
+  if (v === 'top') {
+    camera.position.set(0, 115, 0.1);
+    document.getElementById('v-top').classList.add('active');
+  } else if (v === 'bot') {
+    camera.position.set(0, -115, 0.1);
+    document.getElementById('v-bot').classList.add('active');
   } else {
-    camera.position.set(0, 85, 95);
-    document.getElementById('btn-iso').classList.add('active');
+    camera.position.set(0, 78, 82);
+    document.getElementById('v-iso').classList.add('active');
   }
-  controls.target.set(0, 0, 0);
+  controls.target.set(0, 0, 2);
   controls.update();
-}
-
-function updateLabels() {
-  const halfW = window.innerWidth / 2;
-  const halfH = window.innerHeight / 2;
-
-  labelElements.forEach(item => {
-    const isStepVisible = viewAll || item.step <= currentStep;
-    if (!showLabels || !isStepVisible) {
-      item.div.style.display = 'none';
-      return;
-    }
-    // Önceki adımların etiketlerini gizle veya sönükleştir ki kalabalık yapmasın
-    if (!viewAll && item.step < currentStep) {
-      item.div.style.opacity = '0.35';
-      item.div.classList.remove('active-step');
-    } else {
-      item.div.style.opacity = '1';
-      item.div.classList.toggle('active-step', !viewAll && item.step === currentStep);
-    }
-
-    const pos = new THREE.Vector3();
-    item.obj.getWorldPosition(pos);
-    pos.y += 7;
-    pos.project(camera);
-
-    if (pos.z > 1) {
-      item.div.style.display = 'none';
-    } else {
-      item.div.style.display = 'block';
-      item.div.style.left = (pos.x * halfW + halfW) + 'px';
-      item.div.style.top = (-pos.y * halfH + halfH) + 'px';
-    }
-  });
 }
 
 window.addEventListener('resize', () => {
@@ -597,12 +674,11 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-updateStepVisibility();
+refreshScene();
 
 function animate() {
   requestAnimationFrame(animate);
   controls.update();
-  updateLabels();
   renderer.render(scene, camera);
 }
 animate();
